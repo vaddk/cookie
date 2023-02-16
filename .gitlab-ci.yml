@@ -1,0 +1,32 @@
+image: node:latest
+
+stages:
+  - test
+  - publish
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+
+test:
+  stage: test
+  tags:
+    - plugins
+  script:
+    - npm i
+    - npm run typecheck
+    - npm run lint
+
+publish:
+  stage: publish
+  tags:
+    - plugins
+  script:
+    - npm run build
+    - head -n -2 .npmrc > .tmp; mv .tmp .npmrc
+    - echo -e "\n@vaddk:registry=https://${CI_SERVER_HOST}/api/v4/projects/${PROJECT_ID}/packages/npm/" >> .npmrc
+    - echo "//${CI_SERVER_HOST}/api/v4/projects/${PROJECT_ID}/packages/npm/:_authToken=${PROJECT_TOKEN}" >> .npmrc
+    - npm publish
